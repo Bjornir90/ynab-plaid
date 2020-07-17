@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Login to bank</title>
+    </head>
+    <body>
+        <button id="link-button">Link Account</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script type="text/javascript">
+(function($) {
+  var handler = Plaid.create({
+    clientName: 'Plaid to YNAB',
+    env: '<%= PLAID_ENV %>',
+    key: '<%= PLAID_PUBLIC_KEY %>',
+    product: ['transactions'],
+    // Optional – use webhooks to get transaction and error updates
+    webhook: 'https://requestb.in',
+    onLoad: function() {
+      // Optional, called when Link loads
+    },
+    onSuccess: function(public_token, metadata) {
+      console.log("Public token "+public_token);
+      $.post('/get_access_token', {
+        public_token: public_token,
+      });
+    },
+    onExit: function(err, metadata) {
+      // The user exited the Link flow.
+      if (err != null) {
+        // The user encountered a Plaid API error prior to exiting.
+      }
+    },
+    onEvent: function(eventName, metadata) {
+
+    }
+  });
+
+  $('#link-button').on('click', function(e) {
+    handler.open();
+  });
+})(jQuery);
+</script>
+    </body>
+</html>
