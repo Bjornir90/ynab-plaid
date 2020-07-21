@@ -1,3 +1,5 @@
+#! /app/bin/node
+
 import * as https from "https";
 
 const options = {

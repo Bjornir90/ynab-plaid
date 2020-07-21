@@ -29,7 +29,7 @@ async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
 
 function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
     let result = {
-        amount: original.amount*-1000,
+        amount: original.amount*-1000, //Convert to milliunits amount, and reverse sign from plaid to ynab
         account_id: process.env.YNAB_CHECKING_ACCOUNT_ID,
         date: original.date,
         payee_name: original.name,
