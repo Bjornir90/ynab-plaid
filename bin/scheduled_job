@@ -1,4 +1,4 @@
-#! /app/bin/node
+#! /app/.heroku/node/bin/node
 "use strict";
 exports.__esModule = true;
 var app_1 = require("../app");
