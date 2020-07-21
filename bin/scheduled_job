@@ -1,12 +1,5 @@
-#! /app/.heroku/node/bin/node
+#! /app/bin/node
 "use strict";
 exports.__esModule = true;
-var https = require("https");
-var options = {
-    hostname: process.env.APP_DOMAIN,
-    port: process.env.PORT,
-    path: '/triggerupdate',
-    method: 'POST'
-};
-var req = https.request(options, function (res) { });
-req.end();
+var app_1 = require("../app");
+app_1.fetchAndUpdateTransactions();

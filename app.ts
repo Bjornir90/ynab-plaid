@@ -39,20 +39,7 @@ function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
     return result;
 }
 
-plaidClient.getBalance(process.env.PLAID_ACCESS_TOKEN, (err, response) => {
-    console.log(response.accounts.forEach((account) => {
-        console.log(account.name+" : "+account.balances.current);
-    }));
-});
-
-let app = express();
-
-app.use(bodyParser.json());
-
-app.set("view engine","ejs");
-
-app.post("/triggerupdate", (request, response) => {
-
+export function fetchAndUpdateTransactions(){
     let transactionResponse = getLastDayTransactions();
 
     let transactionsToCreate = new Array<ynab.SaveTransaction>();
@@ -69,7 +56,22 @@ app.post("/triggerupdate", (request, response) => {
         ynabAPI.transactions.createTransactions(process.env.YNAB_BUDGET_ID, {transactions: transactionsToCreate});
 
     });
+}
 
+plaidClient.getBalance(process.env.PLAID_ACCESS_TOKEN, (err, response) => {
+    console.log(response.accounts.forEach((account) => {
+        console.log(account.name+" : "+account.balances.current);
+    }));
+});
+
+let app = express();
+
+app.use(bodyParser.json());
+
+app.set("view engine","ejs");
+
+app.post("/triggerupdate", (request, response) => {
+    fetchAndUpdateTransactions();
 });
 /*
 app.post("/get_access_token", (request, response) => {
