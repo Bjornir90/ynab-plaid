@@ -29,7 +29,7 @@ async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
 
 function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
     let result = {
-        amount: original.amount*1000,
+        amount: original.amount*-1000,
         account_id: process.env.YNAB_CHECKING_ACCOUNT_ID,
         date: original.date,
         payee_name: original.name,
@@ -62,7 +62,7 @@ app.post("/triggerupdate", (request, response) => {
 
         transactions.forEach(transaction => {
             let saveTransaction = formatPlaidToYnab(transaction);
-            console.log("Transaction to push :"+saveTransaction);
+            console.log("Transaction to push :",saveTransaction);
             transactionsToCreate.push(saveTransaction);
         });
 
