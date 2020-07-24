@@ -24,6 +24,8 @@ const ynabAPI = new ynab.API(process.env.YNAB_KEY);
 async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
     let startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
     let endDate = moment().format("YYYY-MM-DD");
+
+    console.log("Transactions from "+startDate+" to "+endDate);
     return await plaidClient.getTransactions(process.env.PLAID_ACCESS_TOKEN, startDate, endDate);
 }
 
@@ -39,7 +41,7 @@ function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
     return result;
 }
 
-export function fetchAndUpdateTransactions(){
+export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse> {
     let transactionResponse = getLastDayTransactions();
 
     let transactionsToCreate = new Array<ynab.SaveTransaction>();
@@ -59,6 +61,8 @@ export function fetchAndUpdateTransactions(){
     });
 
     transactionResponse.catch(err => console.log("Error while retrieving transactions : "+err));
+
+    return transactionResponse;
 }
 
 let app = express();
@@ -67,10 +71,16 @@ app.use(bodyParser.json());
 
 app.set("view engine","ejs");
 
-app.get("/trigger", (req, res) => {
+app.get("/test", (req, res) => {
     let transactionsResponse = getLastDayTransactions();
     
-    transactionsResponse.then(transactions => res.json({'data': transactions}), err => res.json({'error': err}));
+    transactionsResponse.then(response => res.json({'data': response.transactions}), err => res.json({'error': err}));
+});
+
+app.get("/trigger", (req, res) => {
+    let transactionResponse = fetchAndUpdateTransactions();
+
+    transactionResponse.then(response => res.json({'data': response.transactions}), err => res.json({'error': err}));
 });
 
 /*
