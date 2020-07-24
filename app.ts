@@ -13,13 +13,6 @@ const plaidClient = new plaid.Client(
 
 const ynabAPI = new ynab.API(process.env.YNAB_KEY);
 
-// (async function() {
-//     let response = await ynabAPI.budgets.getBudgets();
-//     let budgets = response.data.budgets;
-//     for(let budget of budgets){
-//         console.log("Budget "+budget.name+" id : "+budget.id);
-//     }
-// })();
 
 async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
     let startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
@@ -49,6 +42,11 @@ export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse
     transactionResponse.then(response => {
         let transactions = response.transactions;
 
+        if(transactions.length == 0){
+            console.log("No transactions found");
+            return;
+        }
+
         console.log("Transactions : ",transactions);
 
         transactions.forEach(transaction => {
@@ -58,9 +56,7 @@ export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse
 
         ynabAPI.transactions.createTransactions(process.env.YNAB_BUDGET_ID, {transactions: transactionsToCreate});
 
-    });
-
-    transactionResponse.catch(err => console.log("Error while retrieving transactions : "+err));
+    }, err => console.log("Error while retrieving transactions : "+err));
 
     return transactionResponse;
 }
@@ -74,13 +70,13 @@ app.set("view engine","ejs");
 app.get("/test", (req, res) => {
     let transactionsResponse = getLastDayTransactions();
     
-    transactionsResponse.then(response => res.json({'data': response.transactions}), err => res.json({'error': err}));
+    transactionsResponse.then(response => res.status(200).json({'data': response}), err => res.status(500).json({'error': err}));
 });
 
 app.get("/trigger", (req, res) => {
     let transactionResponse = fetchAndUpdateTransactions();
 
-    transactionResponse.then(response => res.json({'data': response.transactions}), err => res.json({'error': err}));
+    transactionResponse.then(response => res.status(200).json({'data': response}), err => res.status(500).json({'error': err}));
 });
 
 /*
