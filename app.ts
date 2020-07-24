@@ -47,22 +47,19 @@ export function fetchAndUpdateTransactions(){
     transactionResponse.then(response => {
         let transactions = response.transactions;
 
+        console.log("Transactions : ",transactions);
+
         transactions.forEach(transaction => {
             let saveTransaction = formatPlaidToYnab(transaction);
-            console.log("Transaction to push :",saveTransaction);
             transactionsToCreate.push(saveTransaction);
         });
 
         ynabAPI.transactions.createTransactions(process.env.YNAB_BUDGET_ID, {transactions: transactionsToCreate});
 
     });
-}
 
-plaidClient.getBalance(process.env.PLAID_ACCESS_TOKEN, (err, response) => {
-    console.log(response.accounts.forEach((account) => {
-        console.log(account.name+" : "+account.balances.current);
-    }));
-});
+    transactionResponse.catch(err => console.log("Error while retrieving transactions : "+err));
+}
 
 let app = express();
 
@@ -70,9 +67,12 @@ app.use(bodyParser.json());
 
 app.set("view engine","ejs");
 
-app.post("/triggerupdate", (request, response) => {
-    fetchAndUpdateTransactions();
+app.get("/trigger", (req, res) => {
+    let transactionsResponse = getLastDayTransactions();
+    
+    transactionsResponse.then(transactions => res.json({'data': transactions}), err => res.json({'error': err}));
 });
+
 /*
 app.post("/get_access_token", (request, response) => {
     let public_token = request.body.public_token;
