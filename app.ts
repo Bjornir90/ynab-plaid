@@ -64,6 +64,7 @@ export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse
 let app = express();
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
 
 app.set("view engine","ejs");
 
@@ -77,6 +78,12 @@ app.get("/trigger", (req, res) => {
     let transactionResponse = fetchAndUpdateTransactions();
 
     transactionResponse.then(response => res.status(200).json({'data': response}), err => res.status(500).json({'error': err}));
+});
+
+app.get("/dashboard", (req, res) => res.render("dashboard"));
+
+app.post("/transactionfromdates", (req, res) => {
+
 });
 
 /*
