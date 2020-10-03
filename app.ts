@@ -18,7 +18,7 @@ async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
     let startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
     let endDate = moment().format("YYYY-MM-DD");
 
-    console.log("Transactions from "+startDate+" to "+endDate);
+    console.log("Retrieving transactions from "+startDate+" to "+endDate);
     return await plaidClient.getTransactions(process.env.PLAID_ACCESS_TOKEN, startDate, endDate);
 }
 
@@ -67,6 +67,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
 app.set("view engine","ejs");
+app.use(express.static('/public'));
 
 app.get("/test", (req, res) => {
     let transactionsResponse = getLastDayTransactions();
@@ -78,6 +79,27 @@ app.get("/trigger", (req, res) => {
     let transactionResponse = fetchAndUpdateTransactions();
 
     transactionResponse.then(response => res.status(200).json({'data': response}), err => res.status(500).json({'error': err}));
+});
+
+app.post("/webhook", (req, res) => {
+
+    let type = req.webhook_type;
+    let code = req.webhook_code;
+
+    if(type == "ITEM" && code == "WEBHOOK_UPDATE_ACKNOWLEDGED"){
+        console.log("Webhook update acknoledged by server");
+        res.sendStatus(200);
+        return;
+    } else if (type == "TRANSACTIONS" && code != "DEFAULT_UPDATE") {
+        console.log("Received irrelevant transaction update :", code);
+        res.sendStatus(200);
+        return;
+    } else if (type == "TRANSACTIONS" && code == "DEFAULT_UPDATE"){
+        console.log("Default update webhook received");
+        fetchAndUpdateTransactions();
+        res.sendStatus(200);
+    }
+
 });
 
 app.get("/dashboard", (req, res) => res.render("dashboard"));
