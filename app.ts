@@ -3,6 +3,7 @@ import * as ynab from "ynab";
 import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as moment from "moment";
+import * as https from "https";
 
 const plaidClient = new plaid.Client(
     process.env.PLAID_CLIENT_ID,
@@ -87,7 +88,7 @@ app.post("/webhook", (req, res) => {
     let code = req.body.webhook_code;
 
     if(type == "ITEM" && code == "WEBHOOK_UPDATE_ACKNOWLEDGED"){
-        console.log("Webhook update acknoledged by server");
+        console.log("Webhook update acknowledged by server");
         res.sendStatus(200);
         return;
     } else if (type == "TRANSACTIONS" && code != "DEFAULT_UPDATE") {
@@ -96,11 +97,20 @@ app.post("/webhook", (req, res) => {
         return;
     } else if (type == "TRANSACTIONS" && code == "DEFAULT_UPDATE"){
         console.log("Default update webhook received");
+        //Send a request to deadman's snitch for health monitoring
+        const snitchReq = https.request({
+            hostname: "nosnch.in",
+            port: 443,
+            path: "/8f487fcbc9",
+            method: "GET"
+        });
+        snitchReq.end();
         fetchAndUpdateTransactions();
         res.sendStatus(200);
         return;
     } else {
         console.log("Received unknown update code : ", code);
+        
         res.sendStatus(200);
     }
 });
