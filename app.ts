@@ -98,8 +98,11 @@ app.post("/webhook", (req, res) => {
         console.log("Default update webhook received");
         fetchAndUpdateTransactions();
         res.sendStatus(200);
+        return;
+    } else {
+        console.log("Received unknown update type : ", code);
+        res.sendStatus(200);
     }
-
 });
 
 app.get("/dashboard", (req, res) => res.render("dashboard"));
