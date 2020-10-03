@@ -83,8 +83,8 @@ app.get("/trigger", (req, res) => {
 
 app.post("/webhook", (req, res) => {
 
-    let type = req.webhook_type;
-    let code = req.webhook_code;
+    let type = req.body.webhook_type;
+    let code = req.body.webhook_code;
 
     if(type == "ITEM" && code == "WEBHOOK_UPDATE_ACKNOWLEDGED"){
         console.log("Webhook update acknoledged by server");
@@ -100,7 +100,7 @@ app.post("/webhook", (req, res) => {
         res.sendStatus(200);
         return;
     } else {
-        console.log("Received unknown update type : ", code);
+        console.log("Received unknown update code : ", code);
         res.sendStatus(200);
     }
 });
