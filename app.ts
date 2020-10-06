@@ -15,12 +15,12 @@ const plaidClient = new plaid.Client(
 const ynabAPI = new ynab.API(process.env.YNAB_KEY);
 
 
-async function getLastDayTransactions(): Promise<plaid.TransactionsResponse>{
+async function getLastDayTransactions(maxCount: number = 40): Promise<plaid.TransactionsResponse>{
     let startDate = moment().subtract(1, "days").format("YYYY-MM-DD");
     let endDate = moment().format("YYYY-MM-DD");
 
-    console.log("Retrieving transactions from "+startDate+" to "+endDate);
-    return await plaidClient.getTransactions(process.env.PLAID_ACCESS_TOKEN, startDate, endDate);
+    console.log("Retrieving at most "+maxCount+" transactions from "+startDate+" to "+endDate);
+    return await plaidClient.getTransactions(process.env.PLAID_ACCESS_TOKEN, startDate, endDate, {count: maxCount});
 }
 
 function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
@@ -35,8 +35,8 @@ function formatPlaidToYnab(original: plaid.Transaction): ynab.SaveTransaction {
     return result;
 }
 
-export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse> {
-    let transactionResponse = getLastDayTransactions();
+export function fetchAndUpdateTransactions(maxCount: number = 40): Promise<plaid.TransactionsResponse> {
+    let transactionResponse = getLastDayTransactions(maxCount);
 
     let transactionsToCreate = new Array<ynab.SaveTransaction>();
 
@@ -47,8 +47,6 @@ export function fetchAndUpdateTransactions(): Promise<plaid.TransactionsResponse
             console.log("No transactions found");
             return;
         }
-
-        console.log("Transactions : ",transactions);
 
         transactions.forEach(transaction => {
             let saveTransaction = formatPlaidToYnab(transaction);
@@ -96,7 +94,8 @@ app.post("/webhook", (req, res) => {
         res.sendStatus(200);
         return;
     } else if (type == "TRANSACTIONS" && code == "DEFAULT_UPDATE"){
-        console.log("Default update webhook received");
+        let numberOfNewTransactions = req.body.new_transactions;
+        console.log("Default update webhook received with "+numberOfNewTransactions+" new transactions");
         //Send a request to deadman's snitch for health monitoring
         const snitchReq = https.request({
             hostname: "nosnch.in",
@@ -105,7 +104,7 @@ app.post("/webhook", (req, res) => {
             method: "GET"
         });
         snitchReq.end();
-        fetchAndUpdateTransactions();
+        fetchAndUpdateTransactions(numberOfNewTransactions);
         res.sendStatus(200);
         return;
     } else {
